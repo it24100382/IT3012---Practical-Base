@@ -1,5 +1,21 @@
 import unittest
 from agent import SimpleReflexAgent, ModelBasedAgent, SearchAgent
+from visual_grid_game import VisualGridHuntGame
+
+
+class TestTrapGeneration(unittest.TestCase):
+    def test_toxic_traps_are_created_safely(self):
+        game = VisualGridHuntGame(width=10, height=10, num_food=5)
+
+        self.assertTrue(hasattr(game, 'toxic_traps'))
+        self.assertIsInstance(game.toxic_traps, set)
+
+        for pos in game.toxic_traps:
+            self.assertNotEqual(pos, (0, 0))
+            self.assertNotIn(pos, game.walls)
+            self.assertNotIn(pos, game.food_positions)
+            self.assertIn(pos[0], range(game.width))
+            self.assertIn(pos[1], range(game.height))
 
 
 class TestPractical1And2_ReflexAgents(unittest.TestCase):
