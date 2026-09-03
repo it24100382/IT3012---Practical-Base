@@ -9,9 +9,7 @@ class GreedyGridAgent:
         self.actions_pool = ['Up', 'Down', 'Left', 'Right']
 
     def sense_and_act(self, percept: dict) -> str:
-        # If standing directly on food, or just wander / move towards coordinates
-        pos = percept['agent_pos']
-        # Simple heuristic or fallback random sweep
+        pos = percept.get('agent_pos', [0, 0])
         return random.choice(self.actions_pool)
 
 
@@ -19,7 +17,6 @@ class SimpleReflexAgent:
     """Condition-action agent with no memory-based planning.
 
     This agent reacts only to the current percept, with no stored history.
-    The direction state is just the current heading, not a learned memory.
     """
 
     def __init__(self):
@@ -59,7 +56,6 @@ class ModelBasedAgent:
         return (x + dx, y + dy)
 
     def sense_and_act(self, percept: dict) -> str:
-        # Update memory first using the current sensor state and the agent's inferred location.
         pos = tuple(percept.get('agent_pos', (0, 0)))
         if self.last_position is not None and pos != self.last_position:
             self.visited_cells.add(self.last_position)
@@ -77,9 +73,9 @@ class ModelBasedAgent:
             return self.facing
 
         if percept.get('wall_ahead'):
-            if left_cell in self.visited_cells:
+            if left_cell in self.visited_cells and right_cell not in self.visited_cells:
                 action = right_dir
-            elif right_cell in self.visited_cells:
+            elif right_cell in self.visited_cells and left_cell not in self.visited_cells:
                 action = left_dir
             else:
                 action = left_dir
@@ -87,7 +83,6 @@ class ModelBasedAgent:
             self.last_action = action
             return action
 
-        # If the straight path is a previously visited cell, detour instead of repeating the loop.
         if ahead_cell in self.visited_cells and left_cell not in self.visited_cells:
             action = left_dir
         elif ahead_cell in self.visited_cells and right_cell not in self.visited_cells:
@@ -98,3 +93,12 @@ class ModelBasedAgent:
         self.facing = action
         self.last_action = action
         return action
+
+
+class SearchAgent:
+    """Problem-solving / planning agent for search algorithms (BFS, DFS, UCS, A*)."""
+
+    def __init__(self):
+        self.plan = []
+        self.active_algo = 'BFS'
+
