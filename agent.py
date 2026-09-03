@@ -1,5 +1,7 @@
 # agent.py
 import random
+import heapq
+from collections import deque
 
 
 class GreedyGridAgent:
@@ -96,9 +98,112 @@ class ModelBasedAgent:
 
 
 class SearchAgent:
-    """Problem-solving / planning agent for search algorithms (BFS, DFS, UCS, A*)."""
+    """Problem-solving / planning agent using Breadth-First, Depth-First, and Uniform-Cost Search."""
 
     def __init__(self):
         self.plan = []
         self.active_algo = 'BFS'
+        self.directions = [('Up', (0, 1)), ('Down', (0, -1)), ('Left', (-1, 0)), ('Right', (1, 0))]
+
+    def _get_neighbors(self, pos, walls, grid_size):
+        x, y = pos
+        width, height = grid_size
+        walls_set = set(tuple(w) for w in walls)
+        neighbors = []
+        for action, (dx, dy) in self.directions:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in walls_set:
+                neighbors.append((action, (nx, ny)))
+        return neighbors
+
+    def bfs_search(self, start_pos, goal_pos, walls, grid_size):
+        start_pos = tuple(start_pos)
+        goal_pos = tuple(goal_pos)
+        if start_pos == goal_pos:
+            return []
+
+        queue = deque([(start_pos, [])])
+        reached = {start_pos}
+
+        while queue:
+            curr_pos, path = queue.popleft()
+            for action, neighbor in self._get_neighbors(curr_pos, walls, grid_size):
+                if neighbor == goal_pos:
+                    return path + [action]
+                if neighbor not in reached:
+                    reached.add(neighbor)
+                    queue.append((neighbor, path + [action]))
+        return None
+
+    def dfs_search(self, start_pos, goal_pos, walls, grid_size):
+        start_pos = tuple(start_pos)
+        goal_pos = tuple(goal_pos)
+        if start_pos == goal_pos:
+            return []
+
+        stack = [(start_pos, [])]
+        reached = {start_pos}
+
+        while stack:
+            curr_pos, path = stack.pop()
+            if curr_pos == goal_pos:
+                return path
+
+            for action, neighbor in self._get_neighbors(curr_pos, walls, grid_size):
+                if neighbor not in reached:
+                    reached.add(neighbor)
+                    stack.append((neighbor, path + [action]))
+        return None
+
+    def ucs_search(self, start_pos, goal_pos, walls, grid_size):
+        start_pos = tuple(start_pos)
+        goal_pos = tuple(goal_pos)
+        if start_pos == goal_pos:
+            return []
+
+        counter = 0
+        pq = [(0, counter, start_pos, [])]
+        reached = {start_pos: 0}
+
+        while pq:
+            g_cost, _, curr_pos, path = heapq.heappop(pq)
+            if curr_pos == goal_pos:
+                return path
+
+            for action, neighbor in self._get_neighbors(curr_pos, walls, grid_size):
+                new_g = g_cost + 1
+                if neighbor not in reached or new_g < reached[neighbor]:
+                    reached[neighbor] = new_g
+                    counter += 1
+                    heapq.heappush(pq, (new_g, counter, neighbor, path + [action]))
+        return None
+
+    def sense_and_act(self, percept: dict) -> str:
+        if self.plan:
+            return self.plan.pop(0)
+
+        agent_pos = tuple(percept.get('agent_pos', (0, 0)))
+        grid_size = percept.get('grid_size', (10, 10))
+        walls = percept.get('walls', [])
+        all_food = percept.get('all_food', [])
+
+        if all_food:
+            closest_food = min(all_food, key=lambda f: abs(f[0] - agent_pos[0]) + abs(f[1] - agent_pos[1]))
+            goal_pos = tuple(closest_food)
+
+            if self.active_algo == 'BFS':
+                path = self.bfs_search(agent_pos, goal_pos, walls, grid_size)
+            elif self.active_algo == 'DFS':
+                path = self.dfs_search(agent_pos, goal_pos, walls, grid_size)
+            elif self.active_algo == 'UCS':
+                path = self.ucs_search(agent_pos, goal_pos, walls, grid_size)
+            else:
+                path = None
+
+            if path:
+                self.plan = list(path)
+                return self.plan.pop(0)
+
+        return 'Up'
+
 

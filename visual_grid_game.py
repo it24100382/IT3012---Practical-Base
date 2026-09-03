@@ -62,9 +62,13 @@ class VisualGridHuntGame:
         nx, ny = x + dx, y + dy
 
         wall_ahead = (nx < 0 or nx >= self.width or ny < 0 or ny >= self.height or (nx, ny) in self.walls)
-        food_here = (nx, ny) in self.food_positions
+        food_here = (tuple(self.agent_pos) in self.food_positions)
 
         return {
+            'agent_pos': tuple(self.agent_pos),
+            'grid_size': (self.width, self.height),
+            'walls': list(self.walls),
+            'all_food': list(self.food_positions),
             'wall_ahead': wall_ahead,
             'food_here': food_here,
         }
