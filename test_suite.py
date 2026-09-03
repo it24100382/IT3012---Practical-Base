@@ -121,7 +121,43 @@ class TestPractical3_SearchAgent(unittest.TestCase):
         self.assertTrue(is_empty_or_none, "BFS should return None or [] when the goal is unreachable.")
 
 
+class TestPractical4_InformedSearchAgent(unittest.TestCase):
+    """
+    Tests for Practical 4: Informed Search Agents & Heuristics.
+    Focuses on Manhattan distance, Euclidean distance, and A* Search.
+    """
+
+    def setUp(self):
+        try:
+            self.search_agent = SearchAgent()
+        except NameError:
+            self.fail("SearchAgent class not found.")
+
+    def test_heuristics(self):
+        """Test 5: Verify Manhattan distance returns 7 and Euclidean returns 5.0 for (0,0) -> (3,4)."""
+        start = (0, 0)
+        goal = (3, 4)
+
+        manhattan = self.search_agent.manhattan_distance(start, goal)
+        euclidean = self.search_agent.euclidean_distance(start, goal)
+
+        self.assertEqual(manhattan, 7, f"Expected Manhattan distance 7, got {manhattan}.")
+        self.assertAlmostEqual(euclidean, 5.0, places=2, msg=f"Expected Euclidean distance 5.0, got {euclidean}.")
+
+    def test_astar_search_optimal_path(self):
+        """Test 6: A* Search must find optimal path around maze walls."""
+        grid_size = (4, 4)
+        start_pos = (0, 0)
+        goal_pos = (3, 3)
+        walls = [(1, 0), (2, 0), (0, 2), (1, 2), (2, 2)]
+
+        path = self.search_agent.astar_search(start_pos, goal_pos, walls, grid_size, heuristic_type='manhattan')
+
+        self.assertIsNotNone(path, "A* Search returned None. Path should be found.")
+        self.assertEqual(len(path), 6, f"A* Search path expected 6 steps, got {len(path)}.")
+
+
 if __name__ == '__main__':
     # Run the test suite
     print("=== IT3012: Intelligent Agents - Autograder Test Suite ===\n")
-    unittest.main(verbosity=2)
+    unittest.main(verbosity=2)
